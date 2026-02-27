@@ -1,0 +1,119 @@
+# PostgreSQL HLL Extension - Debian Package
+
+This directory contains scripts for building Debian packages of the PostgreSQL HLL extension.
+
+## Quick Start
+
+### Prerequisites
+
+1. Install fpm (FPM - Effing Package Management):
+   ```bash
+   # On Debian/Ubuntu:
+   sudo apt-get install ruby-dev build-essential
+   sudo gem install fpm
+   
+   # On macOS with Homebrew:
+   brew install gnu-tar
+   gem install fpm
+   ```
+
+2. Install PostgreSQL development files:
+   ```bash
+   # On Debian/Ubuntu:
+   sudo apt-get install postgresql-server-dev-16
+   
+   # Or for other versions:
+   sudo apt-get install postgresql-server-dev-14
+   sudo apt-get install postgresql-server-dev-15
+   ```
+
+## Building Packages
+
+### Build for default version (PostgreSQL 16):
+```bash
+./build-deb.sh
+```
+
+### Build for specific PostgreSQL version:
+```bash
+./build-deb.sh 14  # For PostgreSQL 14
+./build-deb.sh 15  # For PostgreSQL 15
+./build-deb.sh 16  # For PostgreSQL 16
+```
+
+### Using Docker (with jammybuild container):
+```bash
+docker run --rm -v $(pwd):/workspace -w /workspace \
+  276514628126.dkr.ecr.ap-southeast-2.amazonaws.com/jammybuild:master.latest \
+  bash -c "apt-get update && apt-get install -y postgresql-server-dev-16 ruby-dev build-essential && gem install fpm && ./build-deb.sh 16"
+```
+
+## Package Structure
+
+The generated Debian packages follow this naming convention:
+```
+postgresql-{PG_VERSION}-hll_{VERSION}_amd64.deb
+```
+
+Example: `postgresql-16-hll_2.19_amd64.deb`
+
+## Installation
+
+After building, install the package using dpkg:
+
+```bash
+sudo dpkg -i postgresql-16-hll_2.19_amd64.deb
+```
+
+If you encounter dependency issues:
+```bash
+sudo apt-get install -f
+```
+
+Or use apt to handle dependencies automatically:
+```bash
+sudo apt install ./postgresql-16-hll_2.19_amd64.deb
+```
+
+## Usage
+
+After installation, connect to your PostgreSQL database and create the extension:
+
+```sql
+CREATE EXTENSION hll;
+
+-- Verify installation
+SELECT * FROM pg_available_extensions WHERE name = 'hll';
+
+-- Check version
+SELECT extversion FROM pg_extension WHERE extname = 'hll';
+
+-- Example usage
+SELECT hll_cardinality(hll_add_agg(hll_hash_integer(x))) 
+FROM generate_series(1, 100) AS x;
+```
+
+## Uninstallation
+
+First, drop the extension from all databases where it's used:
+
+```sql
+DROP EXTENSION hll;
+```
+
+Then remove the package:
+
+```bash
+sudo apt-get remove postgresql-16-hll
+```
+
+## About HLL
+
+HLL is a PostgreSQL extension for HyperLogLog, a fixed-size, set-like structure used for 
+distinct value counting with tunable precision. It provides approximate cardinality estimation 
+using minimal memory, making it ideal for big data applications.
+
+## License
+
+The HLL extension is licensed under the Apache License 2.0.
+See the LICENSE file in the project root for details.

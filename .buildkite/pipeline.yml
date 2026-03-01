@@ -1,10 +1,15 @@
 ---
 steps:
-  - label: ":debian: Build PostgreSQL 16 HLL Package"
+  - label: ":debian: Build PostgreSQL 16 HLL Package ({{matrix}})"
     key: build-pg16
     command: ".buildkite/build.sh"
     artifact_paths:
       - "build-jammy/*.deb"
+    matrix:
+      - "amd64"
+      - "arm64"
+    agents:
+      queue: "default_{{matrix}}"
 
   - label: ":debian: Publish HLL deb"
     depends_on: build-pg16
